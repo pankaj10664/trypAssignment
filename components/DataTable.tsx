@@ -1,4 +1,4 @@
-import { Table, Thead, Tbody, Tr, Th, Td, Input, Button, Box, Flex } from '@chakra-ui/react';
+import { Table, Thead, Tbody, Tr, Th, Td, Input, Button, Box, Flex,Spinner,Stack } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 
 interface DataTableProps {
@@ -15,6 +15,7 @@ interface TableRow {
 
 const DataTable: React.FC<DataTableProps> = ({ sortable, searchable, paginated, headers }) => {
   const [data, setData] = useState<TableRow[]>([]);
+  const [loading,setLoading]= useState<boolean>(false)
   const [filteredData, setFilteredData] = useState<TableRow[]>([]);
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -22,11 +23,15 @@ const DataTable: React.FC<DataTableProps> = ({ sortable, searchable, paginated, 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
 
+  console.log("filteredData",filteredData)
+
   useEffect(() => {
+    setLoading(true)
     fetch('https://jsonplaceholder.typicode.com/posts')
       .then(response => response.json())
       .then(data => {
         setData(data);
+        setLoading(false)
         setFilteredData(data);
       });
   }, []);
@@ -82,7 +87,23 @@ const DataTable: React.FC<DataTableProps> = ({ sortable, searchable, paginated, 
     : sortedData;
 
   return (
-    <Box>
+    <>
+    {loading? 
+      <Stack direction='row' spacing={4} 
+      display={"flex"}
+      justifyContent={"center"}
+      alignItems={"center"}
+      padding={"20px"}
+      minHeight={"80vh"}>
+     <Spinner
+  thickness='4px'
+  speed='0.65s'
+  emptyColor='gray.200'
+  color='blue.500'
+  size='xl'
+/></Stack>
+      :
+    <Box padding={"20px"}>
       
       {searchable && (
         <Input
@@ -92,6 +113,8 @@ const DataTable: React.FC<DataTableProps> = ({ sortable, searchable, paginated, 
           my={2}
         />
       )}
+        {filteredData.length!==0?
+    <div>
       <Table variant="simple">
         <Thead>
           <Tr>
@@ -102,7 +125,7 @@ const DataTable: React.FC<DataTableProps> = ({ sortable, searchable, paginated, 
             ))}
           </Tr>
         </Thead>
-        <Tbody>
+   <Tbody>
           {paginatedData.map((row, index) => (
             <Tr key={index}>
               {headers.map((header, headerIndex) => (
@@ -112,7 +135,7 @@ const DataTable: React.FC<DataTableProps> = ({ sortable, searchable, paginated, 
           ))}
         </Tbody>
       </Table>
-      {paginated && (
+      {paginated &&filteredData.length!==0&& (
         <Flex justifyContent="center" my={2}>
           <Button
             onClick={() => handlePageChange(currentPage - 1)}
@@ -129,8 +152,16 @@ const DataTable: React.FC<DataTableProps> = ({ sortable, searchable, paginated, 
             Next
           </Button>
         </Flex>
-      )}
-    </Box>
+      )}</div>
+      :
+      <div style={{display:"flex",justifyContent:'center',fontSize:"20px",minHeight:"60vh",alignItems:"center"}}
+      >
+        <Box>There is no data present in table</Box></div>
+      }
+    
+    </Box>}
+    </>
+ 
   );
 };
 
